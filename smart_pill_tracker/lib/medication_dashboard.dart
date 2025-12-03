@@ -41,6 +41,7 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
   List<TimeOfDay> _timesOfTaking = [];
   int _dosesPerDay = 1;
   bool _isTimesSectionExpanded = false;
+  bool _isAddMedicationExpanded = false;
 
   List<Medication> medications = [
     Medication(
@@ -68,6 +69,33 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
       endDate: DateTime.now().add(const Duration(days: 90)),
     ),
   ];
+
+  void _deleteMedication(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Medication'),
+          content: const Text('Are you sure you want to delete this medication?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  medications.removeAt(index);
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   void dispose() {
@@ -106,7 +134,6 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
             // Add New Medication Section
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -122,20 +149,46 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.add_circle, color: Colors.blue, size: 24),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Add New Medication',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue[800],
-                        ),
+                  // Header that's always visible
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        _isAddMedicationExpanded = !_isAddMedicationExpanded;
+                      });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.add_circle, color: Colors.blue, size: 24),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Add New Medication',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue[800],
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            _isAddMedicationExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                            color: Colors.blue,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  
+                  // Expandable content
+                  if (_isAddMedicationExpanded) ...[
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                   
                   // Medication Name
                   TextField(
@@ -406,6 +459,10 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
                       ),
                     ),
                   ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -478,7 +535,7 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              'x${medication.partitionNumber}',
+                              '${medication.partitionNumber}',
                               style: TextStyle(
                                 color: Colors.blue[800],
                                 fontSize: 12,
@@ -530,6 +587,21 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
                           Text(
                             '${medication.startDate.day}/${medication.startDate.month}/${medication.startDate.year} - ${medication.endDate.day}/${medication.endDate.month}/${medication.endDate.year}',
                             style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          const Spacer(),
+                          // Delete button aligned with date
+                          TextButton.icon(
+                            onPressed: () => _deleteMedication(index),
+                            icon: const Icon(Icons.delete, size: 16, color: Colors.red),
+                            label: const Text(
+                              'Delete',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
                           ),
                         ],
                       ),
