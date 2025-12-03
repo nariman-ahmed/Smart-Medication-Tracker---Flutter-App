@@ -463,10 +463,10 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
                       ),
                     ),
                   ],
-                ],
-              ),
-            ),
-
+            ],
+          ),
+        ),
+        // Logout button at the bottom
             const SizedBox(height: 24),
 
             // Current Medications Section
@@ -609,6 +609,31 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
                   ),
                 );
               },
+            ),
+            // Logout button at the bottom
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginSignupPage()),
+                  );
+                },
+                icon: const Icon(Icons.logout, color: Colors.white),
+                label: const Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
