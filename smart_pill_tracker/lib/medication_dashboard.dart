@@ -5,14 +5,14 @@ import 'main.dart';
 class Medication {
   final String name;
   final int partitionNumber;
-  final TimeOfDay timeOfTaking;
+  final List<TimeOfDay> timesOfTaking;
   final DateTime startDate;
   final DateTime endDate;
 
   Medication({
     required this.name,
     required this.partitionNumber,
-    required this.timeOfTaking,
+    required this.timesOfTaking,
     required this.startDate,
     required this.endDate,
   });
@@ -38,27 +38,32 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
   final _partitionController = TextEditingController();
   DateTime? _startDate;
   DateTime? _endDate;
-  TimeOfDay? _timeOfTaking;
+  List<TimeOfDay> _timesOfTaking = [];
+  int _dosesPerDay = 1;
+  bool _isTimesSectionExpanded = false;
 
   List<Medication> medications = [
     Medication(
       name: 'Vitamin D',
       partitionNumber: 1,
-      timeOfTaking: const TimeOfDay(hour: 8, minute: 0),
+      timesOfTaking: [const TimeOfDay(hour: 8, minute: 0)],
       startDate: DateTime.now().subtract(const Duration(days: 5)),
       endDate: DateTime.now().add(const Duration(days: 25)),
     ),
     Medication(
       name: 'Aspirin',
       partitionNumber: 2,
-      timeOfTaking: const TimeOfDay(hour: 14, minute: 30),
+      timesOfTaking: [
+        const TimeOfDay(hour: 8, minute: 0),
+        const TimeOfDay(hour: 20, minute: 0)
+      ],
       startDate: DateTime.now().subtract(const Duration(days: 2)),
       endDate: DateTime.now().add(const Duration(days: 28)),
     ),
     Medication(
       name: 'Blood Pressure Pills',
       partitionNumber: 1,
-      timeOfTaking: const TimeOfDay(hour: 20, minute: 0),
+      timesOfTaking: [const TimeOfDay(hour: 20, minute: 0)],
       startDate: DateTime.now(),
       endDate: DateTime.now().add(const Duration(days: 90)),
     ),
@@ -163,31 +168,153 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Time of Taking
-                  InkWell(
-                    onTap: () => _selectTime(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.grey[50],
+                  // Doses per day selector
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Doses per day:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[700],
+                          ),
+                        ),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.access_time, color: Colors.grey),
-                          const SizedBox(width: 12),
-                          Text(
-                            _timeOfTaking != null
-                                ? 'Time: ${_timeOfTaking!.format(context)}'
-                                : 'Select Time of Taking',
-                            style: TextStyle(
-                              color: _timeOfTaking != null ? Colors.black : Colors.grey[600],
-                              fontSize: 16,
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: _dosesPerDay > 1 ? () => _updateDosesPerDay(_dosesPerDay - 1) : null,
+                              icon: Icon(Icons.remove, color: _dosesPerDay > 1 ? Colors.blue : Colors.grey),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              child: Text(
+                                '$_dosesPerDay',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _dosesPerDay < 6 ? () => _updateDosesPerDay(_dosesPerDay + 1) : null,
+                              icon: Icon(Icons.add, color: _dosesPerDay < 6 ? Colors.blue : Colors.grey),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Times of taking section
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _isTimesSectionExpanded = !_isTimesSectionExpanded;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.access_time, color: Colors.grey),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    _timesOfTaking.isEmpty 
+                                        ? 'Set times for taking medication'
+                                        : '${_timesOfTaking.length} time${_timesOfTaking.length > 1 ? 's' : ''} set',
+                                    style: TextStyle(
+                                      color: _timesOfTaking.isEmpty ? Colors.grey[600] : Colors.black,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  _isTimesSectionExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                  color: Colors.grey,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (_isTimesSectionExpanded) ...[
+                          const Divider(height: 1),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              children: [
+                                ...List.generate(_dosesPerDay, (index) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            'Dose ${index + 1}:',
+                                            style: const TextStyle(fontWeight: FontWeight.w500),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          flex: 2,
+                                          child: InkWell(
+                                            onTap: () => _selectTimeForDose(context, index),
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              decoration: BoxDecoration(
+                                                color: Colors.blue[50],
+                                                border: Border.all(color: Colors.blue[200]!),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                _timesOfTaking.length > index 
+                                                    ? _timesOfTaking[index].format(context)
+                                                    : 'Select time',
+                                                style: TextStyle(
+                                                  color: _timesOfTaking.length > index ? Colors.black : Colors.grey[600],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                                if (_timesOfTaking.length < _dosesPerDay)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Text(
+                                      'Please set all ${_dosesPerDay} times before proceeding',
+                                      style: TextStyle(
+                                        color: Colors.orange[700],
+                                        fontSize: 12,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ],
-                      ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -362,15 +489,42 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // Times section
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(Icons.access_time, color: Colors.grey[600], size: 16),
                           const SizedBox(width: 4),
-                          Text(
-                            medication.timeOfTaking.format(context),
-                            style: TextStyle(color: Colors.grey[600]),
+                          Expanded(
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: medication.timesOfTaking.map((time) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue[50],
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Colors.blue[200]!),
+                                  ),
+                                  child: Text(
+                                    time.format(context),
+                                    style: TextStyle(
+                                      color: Colors.blue[800],
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
                           ),
-                          const SizedBox(width: 16),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Date section
+                      Row(
+                        children: [
                           Icon(Icons.calendar_today, color: Colors.grey[600], size: 16),
                           const SizedBox(width: 4),
                           Text(
@@ -390,14 +544,30 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
     );
   }
 
-  Future<void> _selectTime(BuildContext context) async {
+  void _updateDosesPerDay(int newDoses) {
+    setState(() {
+      _dosesPerDay = newDoses;
+      // Adjust times list to match new doses count
+      if (_timesOfTaking.length > newDoses) {
+        _timesOfTaking = _timesOfTaking.take(newDoses).toList();
+      }
+      // Reset expansion state when changing doses
+      _isTimesSectionExpanded = true;
+    });
+  }
+
+  Future<void> _selectTimeForDose(BuildContext context, int doseIndex) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
     );
     if (picked != null) {
       setState(() {
-        _timeOfTaking = picked;
+        // Ensure list is large enough
+        while (_timesOfTaking.length <= doseIndex) {
+          _timesOfTaking.add(const TimeOfDay(hour: 0, minute: 0));
+        }
+        _timesOfTaking[doseIndex] = picked;
       });
     }
   }
@@ -439,8 +609,8 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
       _showError('Please enter partition number');
       return;
     }
-    if (_timeOfTaking == null) {
-      _showError('Please select time of taking');
+    if (_timesOfTaking.length != _dosesPerDay) {
+      _showError('Please set all ${_dosesPerDay} times for taking medication');
       return;
     }
     if (_startDate == null) {
@@ -455,7 +625,7 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
     final newMedication = Medication(
       name: _medicationNameController.text,
       partitionNumber: int.parse(_partitionController.text),
-      timeOfTaking: _timeOfTaking!,
+      timesOfTaking: List.from(_timesOfTaking),
       startDate: _startDate!,
       endDate: _endDate!,
     );
@@ -464,8 +634,11 @@ class _MedicationDashboardState extends State<MedicationDashboard> {
       medications.add(newMedication);
       _medicationNameController.clear();
       _partitionController.clear();
-      _timeOfTaking = null;
+      _timesOfTaking.clear();
+      _dosesPerDay = 1;
+      _isTimesSectionExpanded = false;
       _startDate = null;
+      _endDate = null;
       _endDate = null;
     });
 
